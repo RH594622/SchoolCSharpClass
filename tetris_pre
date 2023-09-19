@@ -1,0 +1,116 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp1
+{
+    
+    public partial class Form1 : Form
+    {
+        Timer _updater = new Timer();
+        Button currentBlock;
+
+        int max_range, min_range = 0;
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+        public Form1()
+        {
+            InitializeComponent();
+            _updater.Interval = 10;
+            _updater.Tick += _updater_Tick;
+
+            this.KeyPreview = true;
+            this.KeyDown += Form1_KeyDown;
+        }
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            min_range = 50;      //(int)(this.ClientSize.Width * 0.1f);
+            max_range = 500;     //(int)(this.ClientSize.Width * 0.8f);
+            draw_border();
+
+            if (currentBlock != null)
+            {
+                Point p = currentBlock.Location;
+
+                if (e.KeyCode == Keys.A && p.X > min_range)
+                    p.X -= (p.X - 20 >= min_range) ? 20: min_range - p.X;
+
+                if (e.KeyCode == Keys.D && p.X < max_range)
+                    p.X += (p.X + 20 <= max_range) ? 20 : max_range - p.X;
+
+                currentBlock.Location = p;
+            }   
+        }
+
+        void draw_border()
+        {
+            Graphics g = this.CreateGraphics();
+
+            g.DrawRectangle(new Pen(Color.Red), min_range - 1, 0, max_range - min_range + 51, this.ClientSize.Height - 1);
+            g.Dispose();
+            return;
+        }
+
+
+
+        int Clamp(int value, int min, int max)
+        {
+            value = value > max ? max : value;
+            value = value < min ? min : value;
+            return value;
+        }
+        private void _updater_Tick(object sender , EventArgs e)
+        {
+            if (currentBlock != null)
+            {
+                Point p = currentBlock.Location;
+                p.Y++;
+                currentBlock.Location = p;
+
+                if (this.Controls.Count == 2)
+                {
+                    if (currentBlock.Location.Y >= this.ClientSize.Height - currentBlock.Size.Height)
+                    {
+                        currentBlock = null;
+                    }
+                }
+                else if (this.Controls.Count > 2)
+                {
+                    if (currentBlock.Location.Y >= this.Controls[this.Controls.Count - 2].Location.Y - currentBlock.Size.Height)
+                        currentBlock = null;
+                }
+            }
+            else if (currentBlock == null)
+            {
+                currentBlock = CreatBlock();
+                this.Controls.Add(currentBlock);
+            }
+            
+        }
+
+        Button CreatBlock()
+        {
+            Button btn = new Button();
+            btn.Size = new Size(50, 50);
+            btn.Location = new Point(this.Width / 2 - btn.Width / 2, 0);
+            return btn;
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            _updater.Start();
+        }
+    }
+}
